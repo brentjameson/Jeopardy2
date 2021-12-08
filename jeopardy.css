@@ -1,0 +1,37 @@
+/* some colors you may find useful:
+  #115ff4
+  #060ce9
+  #28a200
+  #8d2ab5
+  #74119c
+*/
+
+.board {
+  width: 150px;
+  height: 2px;
+  border: solid 2px #666;
+  background-color: #060ce9;
+  display: table;
+}
+
+th {
+  width: 150px;
+  height: 60px;
+  border: 2px black solid;
+  text-align:center
+}
+
+td {
+  width: 60px;
+  height: 60px;
+  border: 2px black solid;
+  text-align:center
+}
+
+/* .tableTr {
+  display: table-cell
+}
+
+.tableTrTd {
+  display: block
+} */
