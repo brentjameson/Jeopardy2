@@ -25,7 +25,7 @@ function shuffle(array) {
 
 //  * Returns array of category ids
 async function getCategoryIds() {
-    let response = await axios.get('http://jservice.io/api/categories', {params: {count: 100}});
+    let response = await axios.get('https://jservice.io/api/categories', {params: {count: 100}});
     
     let categoryIds = response.data.map(function(object) {
         return object.id
@@ -37,7 +37,7 @@ async function getCategoryIds() {
 // Returns object with data about a category:
 async function getCategory(catId) {
     // console.log(getCategoryIds());
-    let response = await axios.get('http://jservice.io/api/category', {params: {id: catId}})
+    let response = await axios.get('https://jservice.io/api/category', {params: {id: catId}})
     let categoryData = response.data;
     let categoryObj = ({
         title: categoryData.title,
