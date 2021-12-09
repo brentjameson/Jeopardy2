@@ -1,27 +1,8 @@
-// categories is the main data structure for the app; it looks like this:
-
-//  [
-//    { title: "Math",
-//      clues: [
-//        {question: "2+2", answer: 4, showing: null},
-//        {question: "1+1", answer: 2, showing: null}
-//        ...
-//      ],
-//    },
-//    { title: "Literature",
-//      clues: [
-//        {question: "Hamlet Author", answer: "Shakespeare", showing: null},
-//        {question: "Bell Jar Author", answer: "Plath", showing: null},
-//        ...
-//      ],
-//    },
-//    ...
-//  ]
-
-const gameBoardWidth = 6;
-const gameBoardHeight = 5;
-
 let categories = [];
+const cash = [200,400,600,800,1000]
+let startGameCounter = 0;
+let start = $('#start')
+let countClicksJeopardy = 0;
 
 function shuffle(array) {
     let counter = array.length;
@@ -42,12 +23,7 @@ function shuffle(array) {
     return array;
   }
 
-
-/** Get NUM_CATEGORIES random category from API.
- *
- * Returns array of category ids
- */
-
+//  * Returns array of category ids
 async function getCategoryIds() {
     let response = await axios.get('http://jservice.io/api/categories', {params: {count: 100}});
     
@@ -58,18 +34,7 @@ async function getCategoryIds() {
     return idArray.slice(0,6);
 }
 
-/** Return object with data about a category:
- *
- *  Returns { title: "Math", clues: clue-array }
- *
- * Where clue-array is:
- *   [
- *      {question: "Hamlet Author", answer: "Shakespeare", showing: null},
- *      {question: "Bell Jar Author", answer: "Plath", showing: null},
- *      ...
- *   ]
- */
-
+// Returns object with data about a category:
 async function getCategory(catId) {
     // console.log(getCategoryIds());
     let response = await axios.get('http://jservice.io/api/category', {params: {id: catId}})
@@ -80,28 +45,30 @@ async function getCategory(catId) {
             return {question: val.question, answer: val.answer, showing: null}
         })
     })
-    // console.log(categoryObj)
     return categoryObj;
 }
 
-async function makeObj() {
+// returns array with object containing 6 categories and associated questions & answers
+async function makeArray() {
     let idsArray = await getCategoryIds();
-    // console.log(idsArray);
-    let dumbVar = await idsArray.map(async function(id){
+    let createArray = await idsArray.map(async function(id){
         let categoryObj = await getCategory(id)
         return categoryObj
     });
-    return await Promise.all(dumbVar)
+    return await Promise.all(createArray)
 }
-makeObj()
+makeArray()
 
-async function newFunc() {
-    let dumbVar = await makeObj()
-    categories.push(dumbVar)
+// pushes the array from makearray() to the 'categories' array
+async function pushArray() {
+    let pushToCategoriesArray = await makeArray()
+    categories.push(pushToCategoriesArray)
 }
+
+// creates and appends categories
 
 async function appendCategories() {
-    await newFunc()
+    await pushArray()
     const newTr = document.createElement('tr')
     categories.map(async function(val) {
         for (let i = 0; i < val.length; i++) {  
@@ -113,7 +80,7 @@ async function appendCategories() {
     });
 }
 
-const cash = [200,400,600,800,1000]
+// creates the board and loops through the "cash" array to assign cells with a cash value. Creates and appends the Jeopardy board. 
 
 async function appendBoard() {
     await appendCategories()
@@ -129,92 +96,72 @@ async function appendBoard() {
             newTd.innerText = cashText
         }
         counter++
+        hideSpinner();
     } 
 }
 
+// When called, triggers the spinner when the game is loading. ***See index.html for code reference for the spinner
 
-
-
-
-
-/** Fill the HTML table#jeopardy with the categories & cells for questions.
- *
- * - The <thead> should be filled w/a <tr>, and a <td> for each category
- * - The <tbody> should be filled w/NUM_QUESTIONS_PER_CAT <tr>s,
- *   each with a question for each category in a <td>
- *   (initally, just show a "?" where the question/answer would go.)
- */
-
-async function fillTable() {
+function showSpinner() { 
+    $('#loader').removeClass('hidden');
+    console.log('spinner')
 }
 
-/** Handle clicking on a clue: show the question or answer.
- *
- * Uses .showing property on clue to determine what to show:
- * - if currently null, show question & set .showing to "question"
- * - if currently "question", show answer & set .showing to "answer"
- * - if currently "answer", ignore click
- * */
+// triggers the spinner when the game is loading. ***
 
-// function handleClick(evt) {
-    let counter = 0;
-    $('#start').on('click', function(evt) {
-        if(counter === 0) {
-            appendBoard();
+function hideSpinner() { 
+    $('#loader').addClass('hidden')
+}
+
+// listens for click on start button and calls appendBoard(). also calls showSpinner()
+$('#start').on('click', function(evt) {
+    showSpinner();
+    if(startGameCounter === 0) {
+        appendBoard();
+        $('.restart').css('display', 'block')
+        $('#start').css('display', 'none')
         }
-        counter++
+        startGameCounter++
     })
-// }
 
-let countClicksJeopardy = 0;
+    // listens for click on restart button. Click triggers a 'confirm message'. If users clicks 'ok' ---> it calls showSpinner() & appendBoard(). If user clicks 'cancel', the game resumes.
+    $('.restart').on('click', function(evt) {
+        const confirmRestart = confirm('Click "OK" to end current game. Click "Cancel" to resume game')
+        if (confirmRestart === true) {
+            showSpinner();
+            console.log("it's working")
+            $('#jeopardy').empty();
+            categories = []
+            appendBoard()}
+        });
+
+ // Game Logic: 
+//  1- Assigns the question/answers from the categories array to the appropriate td.
+// 2- applies logic based on where user clicks. 
+
 $('#jeopardy').on('click', function(evt) {
     let classNumber = evt.target.classList.value
     let numToString = classNumber.toString()
-    console.log(numToString);
     let question = categories[0][numToString.charAt(0)].clues[numToString.charAt(2)].question
     let answer = categories[0][numToString.charAt(0)].clues[numToString.charAt(2)].answer
+    let qAndAObject = categories[0][numToString.charAt(0)].clues[numToString.charAt(2)]
+    console.log(qAndAObject)
+    if(qAndAObject.showing === 'answer') {
+        console.log('i equal answer')
+        evt.target.innerText = answer
+        countClicksJeopardy = 0
+        return;
+    }
     if(countClicksJeopardy === 0) {
         evt.target.innerText = question
         countClicksJeopardy++
+        qAndAObject.showing = 'question';
     }
     else if(countClicksJeopardy === 1) {
+        if(qAndAObject.showing === 'question') {
         evt.target.innerText = answer
         countClicksJeopardy = 0
+        qAndAObject.showing = 'answer'
+        }
     }
-    else {
-        return
-    }
-    console.log(countClicksJeopardy)
 })
-
-/** Wipe the current Jeopardy board, show the loading spinner,
- * and update the button used to fetch data.
- */
-
-function showLoadingView() {
-
-}
-
-/** Remove the loading spinner and update the button used to fetch data. */
-
-function hideLoadingView() {
-}
-
-/** Start game:
- *
- * - get random category Ids
- * - get data for each category
- * - create HTML table
- * */
-
-async function setupAndStart() {
-}
-
-/** On click of start / restart button, set up game. */
-
-// TODO
-
-/** On page load, add event handler for clicking clues */
-
-// TODO
-
